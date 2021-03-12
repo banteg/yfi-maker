@@ -51,6 +51,9 @@ contract Strategy is BaseStrategy {
     address public dex;
 
     constructor(address _vault) public BaseStrategy(_vault) {
+        minReportDelay = 1 days;
+        maxReportDelay = 3 days;
+        profitFactor = 1000;
         c = 20000;
         c_safe = 40000;
         buffer = 500;
@@ -299,7 +302,7 @@ contract Strategy is BaseStrategy {
     // NOTE: Can override `tendTrigger` and `harvestTrigger` if necessary
     function tendTrigger(uint256 callCost) public override view returns (bool) {
         if (balanceOfmVault() == 0) return false;
-        else return shouldRepay() || (shouldDraw() && drawAmount() > callCost.mul(_getPrice()));
+        else return shouldRepay() || (shouldDraw() && drawAmount() > callCost.mul(_getPrice()).mul(profitFactor));
     }
 
     function prepareMigration(address _newStrategy) internal override {
