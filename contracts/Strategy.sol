@@ -54,7 +54,7 @@ contract Strategy is BaseStrategy {
         minReportDelay = 1 days;
         maxReportDelay = 3 days;
         profitFactor = 1000;
-        c = 20000;
+        c = 24000;
         c_safe = 40000;
         buffer = 500;
         dex = sushiswap;
