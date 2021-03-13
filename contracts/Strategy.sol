@@ -91,22 +91,6 @@ contract Strategy is BaseStrategy {
         buffer = _buffer;
     }
 
-    // optional
-    function setMCDValue(
-        address _manager,
-        address _ethAdapter,
-        address _daiAdapter,
-        address _spot,
-        address _jug
-    ) external onlyGovernance {
-        cdp_manager = _manager;
-        vat = ManagerLike(_manager).vat();
-        mcd_join_yfi_a = _ethAdapter;
-        mcd_join_dai = _daiAdapter;
-        mcd_spot = _spot;
-        jug = _jug;
-    }
-
     function switchDex(bool isUniswap) external onlyAuthorized {
         if (isUniswap) dex = uniswap;
         else dex = sushiswap;
