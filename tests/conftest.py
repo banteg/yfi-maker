@@ -79,12 +79,9 @@ def strategy(accounts, strategist, keeper, vault, Strategy, gov):
     strategy.setKeeper(keeper)
     vault.addStrategy(strategy, 9_000, 0, 2 ** 256 - 1, 1_000, {"from": gov})
 
-    ## authorize oracle for strategy
-    #osm = Contract('0x2953554810F73aD0498F6C948FB6eedf15747EE0')
-    #o = Contract(osm.OSM())
-    #o.set_user(osm, True, {"from": gov})
-    #osm.setAuthorized(strategy, {"from": gov})
-
+    # uncomment to use maker oracle
+    # Contract(strategy.yfi_usd_osm_proxy()).set_user(strategy, True, {"from": gov})
+    
     yield strategy
 
 
