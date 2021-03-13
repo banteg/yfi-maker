@@ -181,7 +181,8 @@ contract Strategy is BaseStrategy {
             }
         }
         // fall back to chainlink oracle if makerdao oracle is unavailable
-        return uint(yfi_usd_chainlink.latestAnswer()) * 1e12;
+        // original response is 8 decimals, convert to 18 decimals
+        return uint(yfi_usd_chainlink.latestAnswer()).mul(1e10);
     }
 
     function _checkDebtCeiling(uint _amt) internal view returns (bool) {
