@@ -185,10 +185,13 @@ contract Strategy is BaseStrategy {
     }
 
     function _checkDebtCeiling(uint _amt) internal view returns (bool) {
-        (,,,uint _line,) = VatLike(vat).ilks(ilk);
-        uint _debt = getTotalDebtAmount().add(_amt);
-        if (_line < _debt.mul(1e27)) { return false; }
-        return true;
+        VatLike.Ilk memory _ilk = VatLike(vat).ilks(ilk);
+        uint _debt = _ilk.Art.mul(_ilk.rate);  // [rad]
+        if (_ilk.line > _debt) {
+            return _ilk.line.sub(_debt) >= _amt.mul(1e27);
+        } else {
+            return false;
+        }
     }
 
     function _lockGEMAndDrawDAI(uint wad, uint wadD) internal {
