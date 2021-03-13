@@ -35,6 +35,7 @@ contract Strategy is BaseStrategy {
     address public mcd_join_dai = address(0x9759A6Ac90977b93B58547b4A71c78317f391A28);
     address public mcd_spot = address(0x65C79fcB50Ca1594B025960e539eD7A9a6D434A3);
     address public jug = address(0x19c0976f590D67707E62397C87829d896Dc0f1F1);
+    DssAutoLine public auto_line = DssAutoLine(0xC7Bdd1F2B16447dcf3dE045C4a039A60EC2f0ba3);
 
     OracleSecurityModule public yfi_usd_osm_proxy = OracleSecurityModule(0x208EfCD7aad0b5DD49438E0b6A0f38E951A50E5f);
     OracleSecurityModule public yfi_usd_osm = OracleSecurityModule(0x5F122465bCf86F45922036970Be6DD7F58820214);
@@ -161,6 +162,8 @@ contract Strategy is BaseStrategy {
         if (_token > 0) {
             uint p = _getPrice();
             uint _draw = _token.mul(p).mul(DENOMINATOR).div(c).div(1e18);
+            // bump available debt ceiling
+            auto_line.exec(ilk);
             // approve adapter to use token amount
             if (_checkDebtCeiling(_draw)) {
                 _lockGEMAndDrawDAI(_token, _draw);
