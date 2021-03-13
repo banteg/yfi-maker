@@ -180,3 +180,15 @@ interface OSMedianizer {
 
     function foresight() external view returns (uint256, bool);
 }
+
+interface OracleSecurityModule {
+    function peek() external view returns (uint256, bool);
+
+    function peep() external view returns (uint256, bool);
+
+    function users(address) external view returns (bool);
+
+    function bud(address) external view returns (bool);
+
+    function oracle() external view returns (address);
+}

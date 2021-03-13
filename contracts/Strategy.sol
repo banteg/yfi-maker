@@ -17,6 +17,7 @@ import {
 import "../interfaces/maker/Maker.sol";
 import "../interfaces/yearn/yVault.sol";
 import "../interfaces/uniswap/Uni.sol";
+import "../interfaces/chainlink/Chainlink.sol";
 
 
 contract Strategy is BaseStrategy {
@@ -35,7 +36,9 @@ contract Strategy is BaseStrategy {
     address public mcd_spot = address(0x65C79fcB50Ca1594B025960e539eD7A9a6D434A3);
     address public jug = address(0x19c0976f590D67707E62397C87829d896Dc0f1F1);
 
-    address public yfi_price_oracle = address(0x2953554810F73aD0498F6C948FB6eedf15747EE0);
+    OracleSecurityModule public yfi_usd_osm_proxy = OracleSecurityModule(0x208EfCD7aad0b5DD49438E0b6A0f38E951A50E5f);
+    OracleSecurityModule public yfi_usd_osm = OracleSecurityModule(0x5F122465bCf86F45922036970Be6DD7F58820214);
+    EACAggregatorProxy public yfi_usd_chainlink = EACAggregatorProxy(0xA027702dbb89fbd58938e4324ac03B58d812b0E1);  // yfi-usd.data.eth
     address constant public yvdai = address(0x19D3364A399d251E894aC732651be8B0E4e85001);
 
     address constant public uniswap = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
@@ -85,10 +88,6 @@ contract Strategy is BaseStrategy {
 
     function setBuffer(uint _buffer) external onlyAuthorized {
         buffer = _buffer;
-    }
-
-    function setOracle(address _oracle) external onlyGovernance {
-        yfi_price_oracle = _oracle;
     }
 
     // optional
@@ -172,9 +171,16 @@ contract Strategy is BaseStrategy {
     }
 
     function _getPrice() internal view returns (uint p) {
-        (uint _read,) = OSMedianizer(yfi_price_oracle).read();
-        (uint _foresight,) = OSMedianizer(yfi_price_oracle).foresight();
-        p = _foresight < _read ? _foresight : _read;
+        // read pessimistic price from makerdao oracle if the strategy is whitelisted in osm proxy
+        if (yfi_usd_osm.bud(address(yfi_usd_osm_proxy)) && yfi_usd_osm_proxy.users(address(this))) {
+            (uint current, bool has) = yfi_usd_osm_proxy.peek();
+            (uint future,) = yfi_usd_osm_proxy.peep();
+            if (has) {
+                return future < current ? future : current;
+            }
+        }
+        // fall back to chainlink oracle if makerdao oracle is unavailable
+        return uint(yfi_usd_chainlink.latestAnswer()) * 1e12;
     }
 
     function _checkDebtCeiling(uint _amt) internal view returns (bool) {
