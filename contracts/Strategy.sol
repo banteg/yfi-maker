@@ -134,6 +134,9 @@ contract Strategy is BaseStrategy {
     }
 
     function adjustPosition(uint256 _debtOutstanding) internal override {
+        JugLike(jug).drip(ilk);  // update stability fee rate accumulator
+        auto_line.exec(ilk);  // bump available debt ceiling
+        
         _deposit();
         if (shouldDraw()) draw();
         else if (shouldRepay()) repay();
@@ -141,18 +144,15 @@ contract Strategy is BaseStrategy {
 
     function _deposit() internal {
         uint _token = want.balanceOf(address(this));
-        if (_token > 0) {
-            uint p = _getPrice();
-            uint _draw = _token.mul(p).mul(DENOMINATOR).div(c).div(1e18);
-            // bump available debt ceiling
-            auto_line.exec(ilk);
-            // approve adapter to use token amount
-            if (_checkDebtCeiling(_draw)) {
-                _lockGEMAndDrawDAI(_token, _draw);
-                // approve yvdai use DAI
-                yVault(yvdai).deposit();
-            }
-        }
+        if (_token == 0) return;
+
+        uint p = _getPrice();
+        uint _draw = _token.mul(p).mul(DENOMINATOR).div(c).div(1e18);
+        _draw = _adjustDrawAmount(_draw);
+        if (_draw == 0) return;
+
+        _lockGEMAndDrawDAI(_token, _draw);
+        yVault(yvdai).deposit();
     }
 
     function _getPrice() internal view returns (uint p) {
@@ -169,14 +169,14 @@ contract Strategy is BaseStrategy {
         return uint(yfi_usd_chainlink.latestAnswer()).mul(1e10);
     }
 
-    function _checkDebtCeiling(uint _amt) internal view returns (bool) {
+    function _adjustDrawAmount(uint amount) internal view returns (uint _available) {
+        // adjust max amount of dai available to draw
         VatLike.Ilk memory _ilk = VatLike(vat).ilks(ilk);
-        uint _debt = _ilk.Art.mul(_ilk.rate);  // [rad]
-        if (_ilk.line > _debt) {
-            return _ilk.line.sub(_debt) >= _amt.mul(1e27);
-        } else {
-            return false;
-        }
+        uint _debt = _ilk.Art.mul(_ilk.rate).add(1e27);  // [rad]
+        if (_debt > _ilk.line) return 0;  // avoid Vat/ceiling-exceeded
+        uint _available = _ilk.line.sub(_debt).div(1e27);
+        if (_available.mul(1e27) < _ilk.dust) return 0;  // avoid Vat/dust
+        return _available < amount ? _available : amount;
     }
 
     function _lockGEMAndDrawDAI(uint wad, uint wadD) internal {
@@ -217,7 +217,7 @@ contract Strategy is BaseStrategy {
         if (_current > _safe) {
             uint d = getTotalDebtAmount();
             uint diff = _current.sub(_safe);
-            return d.mul(diff).div(_safe);
+            return _adjustDrawAmount(d.mul(diff).div(_safe));
         }
         return 0;
     }
