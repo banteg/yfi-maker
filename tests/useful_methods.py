@@ -13,6 +13,7 @@ def state_of_strategy(strategy, currency, vault):
     print("Emergency Exit:", strategy.emergencyExit())
     print(f"Dai Drawn: {strategy.getTotalDebtAmount() / 1e18}")
     print(f"Dai Underlying: {strategy.getUnderlyingDai() / 1e18}")
+    print(f"YFI Locked: {strategy.balanceOfmVault() / scale}")
     print(f"Maker Vault Ratio: {strategy.getmVaultRatio(0) / 10_000}")
     print(f"Draw: {strategy.shouldDraw()} ({strategy.drawAmount() / 1e18})")
     print(f"Repay: {strategy.shouldRepay()} ({strategy.repayAmount() / 1e18})")

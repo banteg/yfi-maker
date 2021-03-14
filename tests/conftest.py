@@ -45,7 +45,7 @@ def token():
 
 @pytest.fixture
 def amount(accounts, token, whale):
-    amount = 10 * 10 ** token.decimals()
+    amount = Wei('1000 ether')
     # In order to get some funds for the token you are about to use,
     # it impersonate an exchange address to use it's funds.
     reserve = whale
@@ -88,10 +88,13 @@ def strategy(accounts, strategist, keeper, vault, Strategy, gov):
 @pytest.fixture
 def whale(accounts):
     # binance7 wallet
-    acc = accounts.at('0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8', force=True)
+    # acc = accounts.at('0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8', force=True)
 
     # binance8 wallet
     #acc = accounts.at('0xf977814e90da44bfa03b6295a0616a897441acec', force=True)
+
+    # sushiswap yfi/weth
+    acc = accounts.at('0x088ee5007C98a9677165D78dD2109AE4a3D04d0C', force=True)
     yield acc
 
 
