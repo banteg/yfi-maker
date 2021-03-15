@@ -209,6 +209,7 @@ contract Strategy is BaseStrategy {
     }
 
     function drawAmount() public view returns (uint) {
+        // amount to draw to reach target ratio not accounting for debt ceiling
         uint _safe = c.mul(1e2);
         uint _current = getmVaultRatio(0);
         if (_current > DENOMINATOR.mul(c_safe).mul(1e2)) {
@@ -217,13 +218,13 @@ contract Strategy is BaseStrategy {
         if (_current > _safe) {
             uint d = getTotalDebtAmount();
             uint diff = _current.sub(_safe);
-            return _adjustDrawAmount(d.mul(diff).div(_safe));
+            return d.mul(diff).div(_safe);
         }
         return 0;
     }
 
     function draw() internal {
-        uint _drawD = drawAmount();
+        uint _drawD = _adjustDrawAmount(drawAmount());
         if (_drawD > 0) {
             _lockGEMAndDrawDAI(0, _drawD);
             yVault(yvdai).deposit();
@@ -291,7 +292,7 @@ contract Strategy is BaseStrategy {
     // NOTE: Can override `tendTrigger` and `harvestTrigger` if necessary
     function tendTrigger(uint256 callCost) public override view returns (bool) {
         if (balanceOfmVault() == 0) return false;
-        else return shouldRepay() || (shouldDraw() && drawAmount() > callCost.mul(_getPrice()).mul(profitFactor));
+        else return shouldRepay() || (shouldDraw() && _adjustDrawAmount(drawAmount()) > callCost.mul(_getPrice()).mul(profitFactor));
     }
 
     function prepareMigration(address _newStrategy) internal override {
