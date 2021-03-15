@@ -29,17 +29,14 @@ def test_operation(web3, chain, vault, strategy, token, amount, dai, dai_vault, 
     print("\n****** Dai ******")
     state_of_vault(dai_vault, dai)
 
-    for i in range(3):
-        print("\n****** Harvest yfi ******")
-        strategy.harvest({'from': strategist})
+    print("\n****** Harvest yfi ******")
+    strategy.harvest({'from': strategist})
 
-        print("\n****** yfi ******")
-        state_of_strategy(strategy, token, vault)
-        state_of_vault(vault, token)
-        print("\n****** Dai ******")
-        state_of_vault(dai_vault, dai)
-
-        chain.sleep(86400)
+    print("\n****** yfi ******")
+    state_of_strategy(strategy, token, vault)
+    state_of_vault(vault, token)
+    print("\n****** Dai ******")
+    state_of_vault(dai_vault, dai)
 
     # withdraw yfi
     print('\n****** withdraw yfi ******')
